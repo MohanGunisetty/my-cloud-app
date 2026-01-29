@@ -33,6 +33,7 @@ def upload_chunk_with_retry(files, data, retries=3):
                 return resp.json()
             else:
                 print(f"[ERROR] Telegram responded: {resp.status_code} {resp.text}")
+                raise Exception(f"Telegram Error {resp.status_code}: {resp.text}")
         except Exception as e:
             print(f"[RETRY] Attempt {attempt} failed: {e}")
         time.sleep(attempt * 1) # Faster retry
