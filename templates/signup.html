@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Login - MyCloud{% endblock %}
+{% block title %}Sign Up - MyCloud{% endblock %}
 
 {% block content %}
 <div class="auth-container"
     style="max-width: 400px; margin: 4rem auto; padding: 2rem; background: rgba(255, 255, 255, 0.05); border-radius: 16px; border: 1px solid var(--border);">
     <div style="text-align: center; margin-bottom: 2rem;">
-        <h2 style="color: var(--primary); margin-bottom: 0.5rem;">Welcome Back</h2>
-        <p style="color: var(--text-muted);">Access your files securely.</p>
+        <h2 style="color: var(--accent); margin-bottom: 0.5rem;">Join the Squad</h2>
+        <p style="color: var(--text-muted);">Create your secure storage account.</p>
     </div>
 
     {% if error %}
@@ -17,7 +17,7 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="/login">
+    <form method="POST" action="/signup">
         <div class="form-group mb-3">
             <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Email Address</label>
             <input type="email" name="email" required placeholder="name@example.com"
@@ -26,16 +26,16 @@
 
         <div class="form-group mb-4">
             <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Password</label>
-            <input type="password" name="password" required placeholder="Enter your password"
+            <input type="password" name="password" required placeholder="Choose a strong password"
                 style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
         </div>
 
-        <button type="submit" class="btn btn-primary"
-            style="width: 100%; padding: 0.75rem; font-size: 1rem;">Login</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">Create
+            Account</button>
     </form>
 
     <div style="text-align: center; margin-top: 1.5rem; color: var(--text-muted);">
-        Don't have an account? <a href="/signup" style="color: var(--accent);">Sign Up</a>
+        Already have an account? <a href="/login" style="color: var(--primary);">Login</a>
     </div>
 </div>
 {% endblock %}

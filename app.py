@@ -98,43 +98,44 @@ def home():
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
-        if email:
-            session['pre_auth_email'] = email
-            if email in AUTH_DB: return redirect(url_for('verify_password'))
-            else: return redirect(url_for('create_password'))
-    return render_template('login.html')
-
-@app.route('/create-password', methods=['GET', 'POST'])
-def create_password():
-    email = session.get('pre_auth_email')
-    if not email: return redirect(url_for('login'))
-    if request.method == 'POST':
         password = request.form.get('password')
-        if password:
-            p_hash = hash_password(password)
-            # Metadata logging disabled to prevent freeze
-            pass
-            AUTH_DB[email] = p_hash
-            session['user_id'] = email
-            session['authenticated'] = True
-            save_db_pinned() # Persist new user
-            return redirect(url_for('dashboard'))
-    return render_template('create_password.html', email=email)
-
-@app.route('/verify-password', methods=['GET', 'POST'])
-def verify_password():
-    email = session.get('pre_auth_email')
-    if not email: return redirect(url_for('login'))
-    error = None
-    if request.method == 'POST':
-        password = request.form.get('password')
+        
+        if not email or not password:
+            return render_template('login.html', error="All fields required")
+            
         stored_hash = AUTH_DB.get(email)
         if stored_hash and verify_password_hash(password, stored_hash):
             session['user_id'] = email
             session['authenticated'] = True
             return redirect(url_for('dashboard'))
-        else: error = "Incorrect password."
-    return render_template('verify_password.html', email=email, error=error)
+        else:
+            return render_template('login.html', error="Invalid email or password")
+            
+    return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        if not email or not password:
+            return render_template('signup.html', error="All fields required")
+            
+        if email in AUTH_DB:
+            return render_template('signup.html', error="Email already exists. Please Login.")
+            
+        p_hash = hash_password(password)
+        AUTH_DB[email] = p_hash
+        session['user_id'] = email
+        session['authenticated'] = True
+        
+        save_db_pinned() # Persist new user
+        return redirect(url_for('dashboard'))
+        
+    return render_template('signup.html')
+
+# Deprecated routes removed (create/verify password)
 
 @app.route('/logout')
 def logout():
