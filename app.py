@@ -12,9 +12,10 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'default-dev-key-123')
 
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_STORAGE_CHANNEL_ID = os.getenv('TELEGRAM_STORAGE_CHANNEL_ID')
-TELEGRAM_METADATA_CHANNEL_ID = os.getenv('TELEGRAM_METADATA_CHANNEL_ID')
+# SECURITY WARNING: Hardcoded secrets for quick fix.
+TELEGRAM_BOT_TOKEN = "8471088417:AAGjfOdUyRWVM7z4DrvZmY4YHmjq4duavVY"
+TELEGRAM_STORAGE_CHANNEL_ID = "-1003842345696"
+TELEGRAM_METADATA_CHANNEL_ID = "-1003742575415"
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 TELEGRAM_FILE_URL = f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}"
 
