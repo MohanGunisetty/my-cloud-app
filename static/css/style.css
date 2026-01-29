@@ -1,0 +1,318 @@
+:root {
+    /* Captain America Theme */
+    --bg-dark: #0a0e17;
+    /* Deep Navy Black */
+    --bg-darker: #050510;
+    --primary: #0044ff;
+    /* Vibranium Blue */
+    --primary-glow: rgba(0, 68, 255, 0.5);
+    --secondary: #d60017;
+    /* Shield Red */
+    --accent: #ffffff;
+    /* Star White */
+    --surface: rgba(15, 25, 45, 0.9);
+    --surface-hover: rgba(25, 40, 65, 0.95);
+    --text-main: #edf2f7;
+    --text-muted: #8da2b5;
+    --border: rgba(255, 255, 255, 0.2);
+    --success: #32CD32;
+    --danger: #d60017;
+
+    /* Typography */
+    --font-heading: 'Roboto Condensed', sans-serif;
+    /* Strong and Heroic */
+    --font-body: 'Roboto', sans-serif;
+
+    /* Effects */
+    --glass-blur: blur(8px);
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 68, 255, 0.3);
+    --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+body {
+    background-color: var(--bg-darker);
+    /* Captain America Shield Background Gradient */
+    background-image:
+        radial-gradient(circle at 50% 50%,
+            var(--accent) 0%,
+            var(--primary) 20%,
+            var(--secondary) 21%,
+            var(--secondary) 40%,
+            var(--accent) 41%,
+            var(--accent) 60%,
+            var(--secondary) 61%,
+            var(--secondary) 80%,
+            var(--bg-darker) 100%);
+    background-size: 200% 200%;
+    /* Zoomed in shield effect */
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Semi-transparent overlay to darken background for readability */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 5, 16, 0.85);
+    z-index: -1;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Ensure nav stays at top */
+nav {
+    flex-shrink: 0;
+    background: linear-gradient(90deg, #001a57 0%, #000000 100%);
+    border-bottom: 3px solid var(--secondary);
+    /* Red Stripe */
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+nav .logo {
+    font-family: var(--font-heading);
+    color: white;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-shadow: 2px 2px 0px var(--secondary);
+}
+
+/* Star Icon in Logo */
+nav .logo::before {
+    content: '★';
+    color: var(--accent);
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px white;
+    margin-right: 5px;
+}
+
+/* Cards */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--primary);
+    /* Blue Top */
+    border-bottom: 4px solid var(--secondary);
+    /* Red Bottom */
+    border-radius: 8px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 900px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+/* Shield Emblem Watermark */
+.card::after {
+    content: '★';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20rem;
+    color: rgba(255, 255, 255, 0.03);
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ensure content sits above watermark */
+.card>* {
+    position: relative;
+    z-index: 1;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.8rem 2rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: linear-gradient(180deg, var(--primary) 0%, #001a57 100%);
+    color: white;
+    border: 1px solid #4a8eff;
+    box-shadow: 0 4px 0 #000e2e;
+}
+
+.btn-primary:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #000e2e;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.2);
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 1.2rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    background: rgba(0, 0, 0, 0.6);
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Table */
+th {
+    text-transform: uppercase;
+    font-family: var(--font-heading);
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    letter-spacing: 1px;
+    font-size: 1rem;
+    text-align: left;
+    padding: 1rem;
+}
+
+td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: 'Roboto', sans-serif;
+    color: #e0e0e0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* File Icon */
+.file-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), #00081a);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    margin-right: 1rem;
+    box-shadow: 0 0 10px rgba(0, 68, 255, 0.3);
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    background: rgba(0, 20, 60, 0.3);
+    transition: all 0.3s;
+    padding: 4rem 2rem;
+    text-align: center;
+    border-radius: 8px;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(0, 68, 255, 0.1);
+    box-shadow: 0 0 30px rgba(0, 68, 255, 0.2);
+}
+
+/* Progress Bar */
+.progress-container {
+    background: #111;
+    border-radius: 4px;
+    height: 12px;
+    /* Thicker */
+    margin-top: 1.5rem;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.progress-bar {
+    background: repeating-linear-gradient(45deg,
+            var(--secondary),
+            var(--secondary) 10px,
+            #ff0000 10px,
+            #ff0000 20px);
+    box-shadow: 0 0 10px var(--secondary);
+    width: 0%;
+    height: 100%;
+    transition: width 0.3s;
+}
+
+/* Utilities */
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-1 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 1rem;
+}
+
+.mb-3 {
+    margin-bottom: 1.5rem;
+}
+
+.mt-2 {
+    margin-top: 1rem;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}

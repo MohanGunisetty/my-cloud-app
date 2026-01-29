@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - MyCloud{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="card text-center" style="width: 100%; max-width: 400px;">
+        <div class="mb-3" style="color: var(--primary);">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+        </div>
+
+        <h1 class="mb-1" style="font-size: 2rem;">Welcome Back</h1>
+        <p class="mb-3" style="color: var(--text-secondary);">Sign in to your private cloud</p>
+
+        <form action="/login" method="POST">
+            <div class="mb-3" style="text-align: left;">
+                <label for="email" class="mb-1 text-muted"
+                    style="display: block; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Email
+                    Address</label>
+                <input type="email" id="email" name="email" required placeholder="name@example.com" autofocus>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem;">
+                Sign In
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

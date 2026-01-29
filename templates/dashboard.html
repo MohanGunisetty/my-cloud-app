@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MyCloud{% endblock %}
+
+{% block content %}
+<!-- UseFlex for Header + Stats -->
+<div class="flex-between mb-3">
+    <h2>Dashboard</h2>
+    <div class="storage-badge">
+        <!-- Priority 3: Storage Stats -->
+        Storage Used: {{ (usage_bytes / 1024 / 1024)|round(2) }} MB
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="mb-3">Upload Files</h3>
+
+    <div class="upload-zone" id="dropZone">
+        <form id="uploadForm">
+            <input type="file" name="file" id="fileInput" required style="display: none;" onchange="updateFileName()">
+            <label for="fileInput" class="btn btn-primary mb-2">Choose File</label>
+            <div id="fileName" class="mb-2" style="color: var(--text-secondary);">No file selected</div>
+
+            <!-- Priority 2: Progress Bar -->
+            <div id="progressContainer" class="progress-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-2" id="uploadBtn" style="width: 100%;">Start Upload</button>
+        </form>
+    </div>
+
+    <div id="uploadStatus" class="mt-2 text-center" style="font-weight: 600;"></div>
+</div>
+
+<div class="card">
+    <h3 style="margin-top: 0;">Your Files</h3>
+    {% if files %}
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td style="display: flex; align-items: center;">
+                        <div class="file-icon">
+                            <!-- SVG Icon based on type (Generic File) -->
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                <polyline points="13 2 13 9 20 9"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-weight: 500;">{{ file.name }}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ (file.size / 1024 /
+                                1024)|round(2) }} MB</div>
+                        </div>
+                    </td>
+                    <td>
+                        <span
+                            style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Synced</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="/download/{{ file.name }}" target="_blank" class="btn btn-primary"
+                            style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Download
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 3rem; opacity: 0.7;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+            style="margin-bottom: 1rem;">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+        <p>No files uploaded yet. Start by choosing a file above.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function updateFileName() {
+        const input = document.getElementById('fileInput');
+        document.getElementById('fileName').textContent = input.files.length > 0 ? input.files[0].name : 'No file selected';
+    }
+
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB (Reduced for reliability)
+
+    document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        let fileInput = document.getElementById('fileInput');
+        if (!fileInput.files.length) return;
+        let file = fileInput.files[0];
+
+        let statusDiv = document.getElementById('uploadStatus');
+        let btn = document.getElementById('uploadBtn');
+        let pBar = document.getElementById('progressBar');
+        let pContainer = document.getElementById('progressContainer');
+
+        statusDiv.style.color = 'var(--primary)';
+        statusDiv.textContent = 'Preparing Upload...';
+        btn.disabled = true;
+        pContainer.style.display = 'block';
+        pBar.style.width = '0%';
+
+        let totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        let chunkIds = [];
+        let totalUploadedSize = 0;
+
+        try {
+            for (let i = 0; i < totalChunks; i++) {
+                let start = i * CHUNK_SIZE;
+                let end = Math.min(file.size, start + CHUNK_SIZE);
+                let chunk = file.slice(start, end);
+
+                statusDiv.textContent = `Uploading Chunk ${i + 1} of ${totalChunks}...`;
+
+                let formData = new FormData();
+                formData.append('file', chunk);
+                formData.append('chunkIndex', i + 1);
+                formData.append('filename', file.name);
+
+                let response = await fetch('/upload_chunk', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed at chunk ${i + 1}`);
+                }
+
+                let result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                chunkIds.push(result.file_id);
+                totalUploadedSize += result.size;
+
+                // Update Progress
+                let percent = Math.round(((i + 1) / totalChunks) * 100);
+                pBar.style.width = percent + '%';
+            }
+
+            statusDiv.textContent = 'Finalizing...';
+
+            // Finalize Upload
+            let finalResponse = await fetch('/upload_complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    total_size: totalUploadedSize,
+                    chunk_ids: chunkIds
+                })
+            });
+
+            if (!finalResponse.ok) throw new Error('Finalization failed');
+
+            statusDiv.style.color = 'var(--success)';
+            statusDiv.textContent = '✅ Completed!';
+            setTimeout(() => location.reload(), 1000);
+
+        } catch (err) {
+            console.error(err);
+            statusDiv.style.color = 'var(--danger)';
+            statusDiv.textContent = '❌ Error: ' + err.message;
+            btn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

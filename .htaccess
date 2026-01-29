@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^(.*)$ https://YOUR_PYTHONANYWHERE_USERNAME.pythonanywhere.com/$1 [R=301,L]
