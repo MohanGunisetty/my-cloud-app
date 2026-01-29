@@ -102,7 +102,7 @@
         document.getElementById('fileName').textContent = input.files.length > 0 ? input.files[0].name : 'No file selected';
     }
 
-    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB (Reduced for reliability)
+    const CHUNK_SIZE = 3 * 1024 * 1024; // 3MB (Optimized for Render Free Tier)
 
     document.getElementById('uploadForm').addEventListener('submit', async function (e) {
         e.preventDefault();
