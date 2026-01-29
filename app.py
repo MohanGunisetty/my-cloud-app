@@ -178,10 +178,11 @@ def download(filename):
     def generate():
         for fid in file_record['chunk_ids']:
              path_info = requests.get(f"{TELEGRAM_API_URL}/getFile", params={'file_id': fid}).json()
-             if path_info.get('ok'):
-                 d_url = f"{TELEGRAM_FILE_URL}/{path_info['result']['file_path']}"
-                 with requests.get(d_url, stream=True) as r:
-                     for c in r.iter_content(8192): yield c
+            if path_info.get('ok'):
+                d_url = f"{TELEGRAM_FILE_URL}/{path_info['result']['file_path']}"
+                with requests.get(d_url, stream=True) as r:
+                    for c in r.iter_content(8192):
+                        yield c
     return Response(stream_with_context(generate()), headers={
         "Content-Disposition": f"attachment; filename={filename}",
         "Content-Type": "application/octet-stream",
