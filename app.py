@@ -25,7 +25,79 @@ AUTH_DB = {}
 # Upload Progress Cache: { 'user_email': 45 } (percentage)
 UPLOAD_STATUS = {}
 
-# --- HELPER: SMART RETRY LOGIC (PRIORITY 1) ---
+# --- PERSISTENCE: TELEGRAM AS DATABASE ---
+def save_db():
+    print("[DB] Saving backup to Telegram...")
+    try:
+        db_state = {'files': FILES_DB, 'auth': AUTH_DB}
+        files = {'document': ('db_backup.json', json.dumps(db_state))}
+        data = {'chat_id': TELEGRAM_METADATA_CHANNEL_ID, 'caption': 'DB_BACKUP'}
+        requests.post(f"{TELEGRAM_API_URL}/sendDocument", data=data, files=files, timeout=30)
+    except Exception as e:
+        print(f"[DB_ERROR] Save failed: {e}")
+
+def load_db():
+    print("[DB] Loading backup from Telegram...")
+    try:
+        # Get last message from channel (Requires Bot to be Admin)
+        # Note: getUpdates doesn't work for channels usually, need getChatHistory? 
+        # Actually Bot API doesn't allow reading channel history easily unless we track message IDs.
+        # Workaround: We can't easily READ unless we use a userbot or robust tracking.
+        # ALTERNATIVE: Use a dedicated 'Pinned Message' or assume the bot can't read history?
+        # IF the bot cannot read history, this fails.
+        # But Bots CAN read channel messages if they are admin.
+        # But there is no 'getHistory' endpoint for Bots!
+        # SOLUTION: We will use a LOCAL FILE 'db_backup.json' for local dev, 
+        # and for Cloud, we rely on the memory. 
+        # WAIT. The user explicitly needs persistence on Re-Deploy.
+        # If Bot API cannot read history, we are stuck.
+        # EXCEPT: We can use a free JSON Bin? Or file.io (ephemeral)?
+        pass 
+    except: pass
+    
+# Wait, standard Bot API CANNOT read channel history.
+# Only MtProto bots (userbots) can.
+# UNLESS we use a Webhook to receive posts? No, that's real-time.
+# RE-STRATEGY: Use 'GitHub Gist' (if user has token) or 'JsonBin'?
+# OR: We just accept that on Free Tier, DB is wiped.
+# BUT user is complaining.
+# TRICK: Telegram file_id is persistent.
+# Use the 'Pinned Message'? Bots can getChat (returns pinned message).
+# YES! We pin the latest backup.
+# 1. Save Backup -> Get Message ID -> Pin It.
+# 2. Load Backup -> Get Chat -> Get Pinned Message -> Get File.
+# THIS WORKS.
+
+def save_db_pinned():
+    try:
+        db_state = {'files': FILES_DB, 'auth': AUTH_DB}
+        files = {'document': ('db_backup.json', json.dumps(db_state))}
+        res = requests.post(f"{TELEGRAM_API_URL}/sendDocument", data={'chat_id': TELEGRAM_METADATA_CHANNEL_ID}, files=files).json()
+        if res.get('ok'):
+            msg_id = res['result']['message_id']
+            # Pin it
+            requests.post(f"{TELEGRAM_API_URL}/pinChatMessage", data={'chat_id': TELEGRAM_METADATA_CHANNEL_ID, 'message_id': msg_id})
+    except Exception as e: print(f"[DB] Save Error: {e}")
+
+def load_db_pinned():
+    try:
+        chat = requests.get(f"{TELEGRAM_API_URL}/getChat", params={'chat_id': TELEGRAM_METADATA_CHANNEL_ID}).json()
+        if chat.get('ok') and chat['result'].get('pinned_message'):
+            doc = chat['result']['pinned_message'].get('document')
+            if doc:
+                f_res = requests.get(f"{TELEGRAM_API_URL}/getFile", params={'file_id': doc['file_id']}).json()
+                if f_res.get('ok'):
+                    content = requests.get(f"{TELEGRAM_FILE_URL}/{f_res['result']['file_path']}").json()
+                    global FILES_DB, AUTH_DB
+                    FILES_DB = content.get('files', [])
+                    AUTH_DB = content.get('auth', {})
+                    print(f"[DB] Restored {len(FILES_DB)} files.")
+    except Exception as e: print(f"[DB] Load Error: {e}")
+
+# Initial Load
+load_db_pinned()
+
+# --- MIDDLEWARE ---
 def upload_chunk_with_retry(files, data, retries=3):
     for attempt in range(1, retries + 1):
         try:
@@ -72,6 +144,7 @@ def create_password():
             AUTH_DB[email] = p_hash
             session['user_id'] = email
             session['authenticated'] = True
+            save_db_pinned() # Persist new user
             return redirect(url_for('dashboard'))
     return render_template('create_password.html', email=email)
 
@@ -191,6 +264,7 @@ def upload_complete():
             'path': data.get('path', '/')
         })
         
+        save_db_pinned() # Persist new file
         return jsonify({'status': 'success'})
         
     except Exception as e:
@@ -217,6 +291,7 @@ def create_folder():
         'type': 'folder',
         'path': current_path
     })
+    save_db_pinned() # Persist new folder
     return redirect(url_for('dashboard', path=current_path))
 
 @app.route('/download/<path:filename>')
