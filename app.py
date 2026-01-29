@@ -27,18 +27,13 @@ UPLOAD_STATUS = {}
 
 # --- PERSISTENCE: TELEGRAM AS DATABASE ---
 DB_LOADED = False
+AUTH_DB = {} # {email: password_hash}
+RECOVERY_DB = {} # {email: recovery_key_hash}
+FILES_DB = [] # [{name, user, chunk_ids, etc}]
 
-def save_db():
-    print("[DB] Saving backup to Telegram...")
-    # ... (rest of old logic, but I need to keep the content I am replacing or ensure minimal diff)
-    # Wait, I am replacing the TOP part of persistence.
-    # I will rewrite the functions to update logic.
-    pass
-
-# Helper to pin message
 def save_db_pinned():
     try:
-        db_state = {'files': FILES_DB, 'auth': AUTH_DB}
+        db_state = {'files': FILES_DB, 'auth': AUTH_DB, 'recovery': RECOVERY_DB}
         files = {'document': ('db_backup.json', json.dumps(db_state))}
         res = requests.post(f"{TELEGRAM_API_URL}/sendDocument", data={'chat_id': TELEGRAM_METADATA_CHANNEL_ID}, files=files).json()
         if res.get('ok'):
@@ -58,11 +53,12 @@ def load_db_pinned():
                 f_res = requests.get(f"{TELEGRAM_API_URL}/getFile", params={'file_id': doc['file_id']}).json()
                 if f_res.get('ok'):
                     content = requests.get(f"{TELEGRAM_FILE_URL}/{f_res['result']['file_path']}").json()
-                    global FILES_DB, AUTH_DB
+                    global FILES_DB, AUTH_DB, RECOVERY_DB
                     FILES_DB = content.get('files', [])
                     AUTH_DB = content.get('auth', {})
+                    RECOVERY_DB = content.get('recovery', {})
                     DB_LOADED = True
-                    print(f"[DB] Restored {len(FILES_DB)} files.")
+                    print(f"[DB] Restored {len(FILES_DB)} files, {len(AUTH_DB)} users.")
     except Exception as e: print(f"[DB] Load Error: {e}")
 
 @app.before_request
@@ -118,22 +114,48 @@ def signup():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        recovery_key = request.form.get('recovery_key') # Get Recovery Key
         
-        if not email or not password:
+        if not email or not password or not recovery_key:
             return render_template('signup.html', error="All fields required")
             
         if email in AUTH_DB:
             return render_template('signup.html', error="Email already exists. Please Login.")
             
         p_hash = hash_password(password)
+        r_hash = hash_password(recovery_key) # Hash the recovery key
+        
         AUTH_DB[email] = p_hash
+        RECOVERY_DB[email] = r_hash # Store recovery
         session['user_id'] = email
         session['authenticated'] = True
         
-        save_db_pinned() # Persist new user
+        save_db_pinned() # Persist new user and key
         return redirect(url_for('dashboard'))
         
     return render_template('signup.html')
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        recovery_key = request.form.get('recovery_key')
+        new_password = request.form.get('new_password')
+        
+        if not email or not recovery_key or not new_password:
+            return render_template('forgot_password.html', error="All fields required")
+            
+        stored_r_hash = RECOVERY_DB.get(email)
+        if stored_r_hash and verify_password_hash(recovery_key, stored_r_hash):
+            # Recovery Success
+            new_p_hash = hash_password(new_password)
+            AUTH_DB[email] = new_p_hash
+            save_db_pinned()
+            return redirect(url_for('login'))
+        else:
+            return render_template('forgot_password.html', error="Invalid Email or Recovery Key")
+            
+    return render_template('forgot_password.html')
 
 # Deprecated routes removed (create/verify password)
 
