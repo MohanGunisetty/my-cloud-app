@@ -182,7 +182,7 @@ def download(filename):
     if not file_record: return "File not found", 404
     def generate():
         for fid in file_record['chunk_ids']:
-             path_info = requests.get(f"{TELEGRAM_API_URL}/getFile", params={'file_id': fid}).json()
+            path_info = requests.get(f"{TELEGRAM_API_URL}/getFile", params={'file_id': fid}).json()
             if path_info.get('ok'):
                 d_url = f"{TELEGRAM_FILE_URL}/{path_info['result']['file_path']}"
                 with requests.get(d_url, stream=True) as r:
