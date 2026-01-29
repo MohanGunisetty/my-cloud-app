@@ -98,16 +98,35 @@ def logout():
 # --- CORE STORAGE FEATURES ---
 
 @app.route('/dashboard')
+@app.route('/dashboard')
 def dashboard():
     if not is_authenticated(): return redirect(url_for('login'))
     user_id = session['user_id']
+    current_path = request.args.get('path', '/')
     
-    user_files = [f for f in FILES_DB if f.get('user') == user_id]
+    # Filter files for current directory
+    # 1. Files in this path
+    # 2. Folders in this path
+    files_in_dir = []
+    for f in FILES_DB:
+        if f.get('user') != user_id: continue
+        f_path = f.get('path', '/')
+        if f_path == current_path:
+            files_in_dir.append(f)
+
+    # Priority 3: Storage Stats (Total)
+    all_user_files = [f for f in FILES_DB if f.get('user') == user_id and f.get('type', 'file') == 'file']
+    total_usage = sum(f.get('size', 0) for f in all_user_files)
     
-    # Priority 3: Storage Stats
-    total_usage = sum(f.get('size', 0) for f in user_files)
-    
-    return render_template('dashboard.html', user_id=user_id, files=user_files, usage_bytes=total_usage)
+    # Breadcrumbs
+    parts = [p for p in current_path.strip('/').split('/') if p]
+    breadcrumbs = []
+    accum = '/'
+    for p in parts:
+        accum += p + '/'
+        breadcrumbs.append({'name': p, 'path': accum})
+
+    return render_template('dashboard.html', user_id=user_id, files=files_in_dir, usage_bytes=total_usage, current_path=current_path, breadcrumbs=breadcrumbs)
 
 @app.route('/upload_chunk', methods=['POST'])
 def upload_chunk():
@@ -167,13 +186,38 @@ def upload_complete():
             'user': user_id,
             'size': total_size,
             'total_chunks': len(chunk_ids),
-            'chunk_ids': chunk_ids
+            'chunk_ids': chunk_ids,
+            'type': 'file',
+            'path': data.get('path', '/')
         })
         
         return jsonify({'status': 'success'})
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/create_folder', methods=['POST'])
+def create_folder():
+    if not is_authenticated(): return jsonify({'error': 'Unauthorized'}), 401
+    user_id = session['user_id']
+    folder_name = request.form.get('folder_name')
+    current_path = request.form.get('path', '/')
+    
+    if not folder_name: return jsonify({'error': 'Name required'}), 400
+    
+    # Check if exists
+    full_path = current_path + folder_name + '/'
+    exists = any(f['path'] == full_path and f['user'] == user_id for f in FILES_DB)
+    if exists: return jsonify({'error': 'Folder exists'}), 400
+    
+    FILES_DB.append({
+        'name': folder_name,
+        'user': user_id,
+        'size': 0,
+        'type': 'folder',
+        'path': current_path
+    })
+    return redirect(url_for('dashboard', path=current_path))
 
 @app.route('/download/<path:filename>')
 def download(filename):

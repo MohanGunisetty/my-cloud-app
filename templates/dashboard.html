@@ -34,14 +34,29 @@
 </div>
 
 <div class="card">
-    <h3 style="margin-top: 0;">Your Files</h3>
+    <!-- Breadcrumbs & Navigation -->
+    <div class="flex-between mb-3">
+        <div class="breadcrumbs">
+            <a href="/dashboard?path=/">Home</a>
+            {% for crumb in breadcrumbs %}
+            / <a href="/dashboard?path={{ crumb.path }}">{{ crumb.name }}</a>
+            {% endfor %}
+        </div>
+        <form action="/create_folder" method="POST" style="display: flex; gap: 0.5rem;">
+            <input type="hidden" name="path" value="{{ current_path }}">
+            <input type="text" name="folder_name" placeholder="New Folder" required
+                style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">+</button>
+        </form>
+    </div>
+
     {% if files %}
     <div style="overflow-x: auto;">
         <table>
             <thead>
                 <tr>
-                    <th>File Name</th>
-                    <th>Status</th>
+                    <th>Name</th>
+                    <th>Type</th>
                     <th style="text-align: right;">Action</th>
                 </tr>
             </thead>
@@ -49,23 +64,41 @@
                 {% for file in files %}
                 <tr>
                     <td style="display: flex; align-items: center;">
-                        <div class="file-icon">
-                            <!-- SVG Icon based on type (Generic File) -->
+                        <div class="file-icon"
+                            style="color: {{ 'var(--accent)' if file.type == 'folder' else 'inherit' }}">
+                            {% if file.type == 'folder' %}
+                            <!-- Folder Icon -->
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                <path
+                                    d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+                            </svg>
+                            {% else %}
+                            <!-- File Icon -->
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                stroke-width="2">
                                 <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                                 <polyline points="13 2 13 9 20 9"></polyline>
                             </svg>
+                            {% endif %}
                         </div>
                         <div>
+                            {% if file.type == 'folder' %}
+                            <a href="/dashboard?path={{ file.path }}{{ file.name }}/"
+                                style="font-weight: 600; text-decoration: none; color: inherit;">{{ file.name }}</a>
+                            {% else %}
                             <div style="font-weight: 500;">{{ file.name }}</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted);">{{ (file.size / 1024 /
                                 1024)|round(2) }} MB</div>
+                            {% endif %}
                         </div>
                     </td>
                     <td>
+                        {% if file.type == 'folder' %}
+                        Folder
+                        {% else %}
                         <span
                             style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Synced</span>
+                        {% endif %}
                     </td>
                     <td style="text-align: right;">
                         <a href="/download/{{ file.name }}" target="_blank" class="btn btn-primary"
@@ -163,13 +196,18 @@
             statusDiv.textContent = 'Finalizing...';
 
             // Finalize Upload
+            // Get current path from URL or default to /
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentPath = urlParams.get('path') || '/';
+
             let finalResponse = await fetch('/upload_complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     filename: file.name,
                     total_size: totalUploadedSize,
-                    chunk_ids: chunkIds
+                    chunk_ids: chunkIds,
+                    path: currentPath
                 })
             });
 
