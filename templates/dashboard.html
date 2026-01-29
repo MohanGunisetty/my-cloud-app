@@ -145,7 +145,8 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Upload failed at chunk ${i + 1}`);
+                    let errText = await response.text();
+                    throw new Error(`Upload failed at chunk ${i + 1} (${response.status}): ${errText}`);
                 }
 
                 let result = await response.json();
