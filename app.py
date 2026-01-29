@@ -116,6 +116,9 @@ def upload_chunk():
     chunk_index = request.form.get('chunkIndex', '0')
     filename = request.form.get('filename', 'unknown')
     
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_STORAGE_CHANNEL_ID:
+        return jsonify({'error': 'Server Config Error: Missing TELEGRAM_BOT_TOKEN or STORAGE_ID'}), 500
+    
     try:
         # Read the chunk data directly from the upload stream
         chunk_data = file_part.read()
