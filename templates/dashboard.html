@@ -3,34 +3,37 @@
 {% block title %}Dashboard - MyCloud{% endblock %}
 
 {% block content %}
-<!-- UseFlex for Header + Stats -->
 <div class="flex-between mb-3">
     <h2>Dashboard</h2>
     <div class="storage-badge">
-        <!-- Priority 3: Storage Stats -->
-        Storage Used: {{ (usage_bytes / 1024 / 1024)|round(2) }} MB
+        Storage Used: {{ (usage_bytes|default(0) / 1024 / 1024)|round(2) }} MB
     </div>
 </div>
 
 <div class="card">
-    <h3 class="mb-3">Upload Files</h3>
-
+    <h3>Upload Files</h3>
     <div class="upload-zone" id="dropZone">
         <form id="uploadForm">
             <input type="file" name="file" id="fileInput" required style="display: none;" onchange="updateFileName()">
-            <label for="fileInput" class="btn btn-primary mb-2">Choose File</label>
+            <label for="fileInput" class="btn btn-primary mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Choose File
+            </label>
             <div id="fileName" class="mb-2" style="color: var(--text-secondary);">No file selected</div>
 
-            <!-- Priority 2: Progress Bar -->
             <div id="progressContainer" class="progress-container">
                 <div id="progressBar" class="progress-bar"></div>
             </div>
 
-            <button type="submit" class="btn btn-primary mt-2" id="uploadBtn" style="width: 100%;">Start Upload</button>
+            <button type="submit" class="btn btn-primary mt-2" id="uploadBtn"
+                style="width: 100%; max-width: 200px;">Start Upload</button>
         </form>
     </div>
-
-    <div id="uploadStatus" class="mt-2 text-center" style="font-weight: 600;"></div>
+    <div id="uploadStatus" class="mt-2 text-center" style="font-weight: 500;"></div>
 </div>
 
 <div class="card">
@@ -44,14 +47,13 @@
         </div>
         <form action="/create_folder" method="POST" style="display: flex; gap: 0.5rem;">
             <input type="hidden" name="path" value="{{ current_path }}">
-            <input type="text" name="folder_name" placeholder="New Folder" required
-                style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;">
+            <input type="text" name="folder_name" placeholder="New Folder" required>
             <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">+</button>
         </form>
     </div>
 
     {% if files %}
-    <div style="overflow-x: auto;">
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -63,54 +65,56 @@
             <tbody>
                 {% for file in files %}
                 <tr>
-                    <td style="display: flex; align-items: center;">
-                        <div class="file-icon"
-                            style="color: {{ 'var(--accent)' if file.type == 'folder' else 'inherit' }}">
-                            {% if file.type == 'folder' %}
-                            <!-- Folder Icon -->
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                <path
-                                    d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-                            </svg>
-                            {% else %}
-                            <!-- File Icon -->
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                <polyline points="13 2 13 9 20 9"></polyline>
-                            </svg>
-                            {% endif %}
-                        </div>
-                        <div>
-                            {% if file.type == 'folder' %}
-                            <a href="/dashboard?path={{ file.path }}{{ file.name }}/"
-                                style="font-weight: 600; text-decoration: none; color: inherit;">{{ file.name }}</a>
-                            {% else %}
-                            <div style="font-weight: 500;">{{ file.name }}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ (file.size / 1024 /
-                                1024)|round(2) }} MB</div>
-                            {% endif %}
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            <div class="file-icon" data-type="{{ file.type }}">
+                                {% if file.type == 'folder' %}
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+                                </svg>
+                                {% else %}
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                    <polyline points="13 2 13 9 20 9"></polyline>
+                                </svg>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if file.type == 'folder' %}
+                                <a href="/dashboard?path={{ file.path }}{{ file.name }}/"
+                                    style="font-weight: 600; color: var(--text-main);">{{ file.name }}</a>
+                                {% else %}
+                                <div style="font-weight: 500; color: var(--text-main);">{{ file.name }}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">{{ (file.size / 1024 /
+                                    1024)|round(2) }} MB</div>
+                                {% endif %}
+                            </div>
                         </div>
                     </td>
                     <td>
                         {% if file.type == 'folder' %}
-                        Folder
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">Folder</span>
                         {% else %}
                         <span
-                            style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Synced</span>
+                            style="color: var(--success); font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Synced
+                        </span>
                         {% endif %}
                     </td>
                     <td style="text-align: right;">
+                        {% if file.type != 'folder' %}
                         <a href="/download/{{ file.name }}" target="_blank" class="btn btn-primary"
-                            style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                            </svg>
+                            style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
                             Download
                         </a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -118,13 +122,13 @@
         </table>
     </div>
     {% else %}
-    <div style="text-align: center; color: var(--text-muted); padding: 3rem; opacity: 0.7;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
-            style="margin-bottom: 1rem;">
+    <div style="text-align: center; color: var(--text-muted); padding: 4rem; opacity: 0.6;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+            style="margin-bottom: 1rem; opacity: 0.5;">
             <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
             <polyline points="13 2 13 9 20 9"></polyline>
         </svg>
-        <p>No files uploaded yet. Start by choosing a file above.</p>
+        <p>No files in this folder.</p>
     </div>
     {% endif %}
 </div>
