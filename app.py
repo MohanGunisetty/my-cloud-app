@@ -92,6 +92,7 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if is_authenticated(): return redirect(url_for('dashboard'))
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -111,6 +112,7 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if is_authenticated(): return redirect(url_for('dashboard'))
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -137,6 +139,7 @@ def signup():
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    if is_authenticated(): return redirect(url_for('dashboard'))
     if request.method == 'POST':
         email = request.form.get('email')
         recovery_key = request.form.get('recovery_key')
